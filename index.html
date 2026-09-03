@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Network Monitor</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7fa;
+      --panel: #ffffff;
+      --text: #17202a;
+      --muted: #64748b;
+      --line: #d9e2ec;
+      --accent: #0f766e;
+      --accent-dark: #115e59;
+      --ok-bg: #dcfce7;
+      --ok-text: #166534;
+      --unknown-bg: #f1f5f9;
+      --unknown-text: #475569;
+      --danger-bg: #fef2f2;
+      --danger-text: #991b1b;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .shell {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin: 0 0 14px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      min-height: 40px;
+      border: 0;
+      border-radius: 6px;
+      background: var(--accent);
+      color: white;
+      font: inherit;
+      font-weight: 650;
+      padding: 0 14px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: var(--accent-dark);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+    }
+
+    button.secondary {
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    button.secondary:hover,
+    button.secondary.active {
+      background: #e6fffb;
+      border-color: #99f6e4;
+      color: var(--accent-dark);
+    }
+
+    .stat {
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 0 12px;
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 720px;
+    }
+
+    th,
+    td {
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      font-size: 14px;
+    }
+
+    th {
+      color: var(--muted);
+      background: #f8fafc;
+      font-size: 12px;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 13px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      border-radius: 999px;
+      padding: 0 10px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .badge.ok {
+      background: var(--ok-bg);
+      color: var(--ok-text);
+    }
+
+    .badge.unknown {
+      background: var(--unknown-bg);
+      color: var(--unknown-text);
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .empty,
+    .error {
+      padding: 22px;
+      color: var(--muted);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .error {
+      color: var(--danger-text);
+      background: var(--danger-bg);
+      border-color: #fecaca;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 18px;
+    }
+
+    .form {
+      display: grid;
+      gap: 14px;
+      max-width: 520px;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    input {
+      min-height: 42px;
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+    }
+
+    input:focus {
+      border-color: #14b8a6;
+      outline: 3px solid #ccfbf1;
+    }
+
+    .message {
+      min-height: 22px;
+      font-size: 14px;
+    }
+
+    .message.ok {
+      color: var(--ok-text);
+    }
+
+    .message.error-text {
+      color: var(--danger-text);
+    }
+
+    @media (max-width: 720px) {
+      .shell {
+        width: min(100% - 20px, 1120px);
+        padding: 18px 0;
+      }
+
+      header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .actions {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <h1>Network Monitor</h1>
+        <p class="subtitle">Devices discovered on your local network.</p>
+      </div>
+      <div class="actions">
+        <span class="stat" id="count">0 devices</span>
+        <button id="refresh" type="button">Refresh</button>
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="Device views">
+      <button class="secondary active" id="current-tab" type="button">Current</button>
+      <button class="secondary" id="history-tab" type="button">History</button>
+      <button class="secondary" id="sites-tab" type="button">Sites</button>
+      <button class="secondary" id="wifi-tab" type="button">Wi-Fi Password</button>
+    </nav>
+
+    <section id="content" class="empty">Loading devices...</section>
+  </main>
+
+  <script>
+    const content = document.querySelector("#content");
+    const count = document.querySelector("#count");
+    const refresh = document.querySelector("#refresh");
+    const currentTab = document.querySelector("#current-tab");
+    const historyTab = document.querySelector("#history-tab");
+    const sitesTab = document.querySelector("#sites-tab");
+    const wifiTab = document.querySelector("#wifi-tab");
+    let activeView = "current";
+
+    function escapeHTML(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function formatDate(value) {
+      if (!value) {
+        return "";
+      }
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) {
+        return value;
+      }
+      return date.toLocaleString();
+    }
+
+    function renderDevices(devices, mode) {
+      count.textContent = `${devices.length} ${devices.length === 1 ? "device" : "devices"}`;
+
+      if (!devices.length) {
+        content.className = "empty";
+        content.textContent = "No devices found.";
+        return;
+      }
+
+      const dateHeaders = mode === "history" ? "<th>First Seen</th><th>Last Seen</th>" : "";
+      content.className = "table-wrap";
+      content.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>IP Address</th>
+              <th>MAC Address</th>
+              <th>Hostname</th>
+              <th>Status</th>
+              ${dateHeaders}
+            </tr>
+          </thead>
+          <tbody>
+            ${devices.map((device) => {
+              const hostname = device.hostname || "unknown";
+              const hostnameClass = hostname === "unknown" ? "unknown" : "ok";
+              return `
+                <tr>
+                  <td><code>${escapeHTML(device.ip)}</code></td>
+                  <td><code>${escapeHTML(device.mac)}</code></td>
+                  <td><span class="badge ${hostnameClass}">${escapeHTML(hostname)}</span></td>
+                  <td><span class="badge ok">${device.connected ? "Connected" : "Offline"}</span></td>
+                  ${mode === "history" ? `
+                    <td class="muted">${escapeHTML(formatDate(device.first_seen))}</td>
+                    <td class="muted">${escapeHTML(formatDate(device.last_seen))}</td>
+                  ` : ""}
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function renderWifiPasswordForm() {
+      count.textContent = "Wi-Fi";
+      content.className = "panel";
+      content.innerHTML = `
+        <form class="form" id="wifi-password-form">
+          <div class="field">
+            <label for="router-ip">Router IP</label>
+            <input id="router-ip" name="routerIp" type="text" inputmode="numeric" autocomplete="off" value="192.168.1.1" required>
+          </div>
+          <div class="field">
+            <label for="router-username">Admin Username</label>
+            <input id="router-username" name="username" type="text" autocomplete="username" value="admin" required>
+          </div>
+          <div class="field">
+            <label for="router-admin-password">Admin Password</label>
+            <input id="router-admin-password" name="admin" type="password" autocomplete="current-password" required>
+          </div>
+          <div class="field">
+            <label for="wifi-password">New Wi-Fi Password</label>
+            <input id="wifi-password" name="password" type="password" autocomplete="new-password" minlength="8" required>
+          </div>
+          <div class="field">
+            <label for="wifi-password-confirm">Confirm Password</label>
+            <input id="wifi-password-confirm" name="confirm" type="password" autocomplete="new-password" minlength="8" required>
+          </div>
+          <button id="save-wifi-password" type="submit">Change Password</button>
+          <div class="message" id="wifi-password-message" role="status"></div>
+        </form>
+      `;
+
+      document.querySelector("#wifi-password-form").addEventListener("submit", changeWifiPassword);
+    }
+
+    function renderSites(visits) {
+      visits = visits || [];
+      count.textContent = `${visits.length} ${visits.length === 1 ? "site" : "sites"}`;
+
+      if (!visits.length) {
+        content.className = "empty";
+        content.textContent = "No site activity found yet.";
+        return;
+      }
+
+      content.className = "table-wrap";
+      content.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Device IP</th>
+              <th>MAC Address</th>
+              <th>Hostname</th>
+              <th>Domain</th>
+              <th>Count</th>
+              <th>First Seen</th>
+              <th>Last Seen</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${visits.map((visit) => {
+              const hostname = visit.hostname || "unknown";
+              const hostnameClass = hostname === "unknown" ? "unknown" : "ok";
+              return `
+                <tr>
+                  <td><code>${escapeHTML(visit.device_ip)}</code></td>
+                  <td><code>${escapeHTML(visit.mac)}</code></td>
+                  <td><span class="badge ${hostnameClass}">${escapeHTML(hostname)}</span></td>
+                  <td><code>${escapeHTML(visit.domain)}</code></td>
+                  <td>${escapeHTML(visit.count)}</td>
+                  <td class="muted">${escapeHTML(formatDate(visit.first_seen))}</td>
+                  <td class="muted">${escapeHTML(formatDate(visit.last_seen))}</td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    async function changeWifiPassword(event) {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const routerIp = form.routerIp.value.trim();
+      const username = form.username.value.trim();
+      const admin = form.admin.value.trim();
+      const password = form.password.value.trim();
+      const confirm = form.confirm.value.trim();
+      const button = form.querySelector("#save-wifi-password");
+      const message = form.querySelector("#wifi-password-message");
+
+      message.className = "message";
+      message.textContent = "";
+
+      if (!routerIp || !username || !admin) {
+        message.className = "message error-text";
+        message.textContent = "Router IP, admin username, and admin password are required.";
+        return;
+      }
+
+      if (password.length < 8) {
+        message.className = "message error-text";
+        message.textContent = "Password must be at least 8 characters.";
+        return;
+      }
+
+      if (password !== confirm) {
+        message.className = "message error-text";
+        message.textContent = "Passwords do not match.";
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "Changing...";
+      try {
+        const response = await fetch("/api/wifi/password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            router_ip: routerIp,
+            username,
+            admin,
+            password,
+          }),
+        });
+        if (!response.ok) {
+          throw new Error(await response.text());
+        }
+        form.reset();
+        message.className = "message ok";
+        message.textContent = "Wi-Fi password changed.";
+      } catch (error) {
+        message.className = "message error-text";
+        message.textContent = error.message.trim() || "Could not change Wi-Fi password.";
+      } finally {
+        button.disabled = false;
+        button.textContent = "Change Password";
+      }
+    }
+
+    async function loadDevices() {
+      if (activeView === "wifi") {
+        renderWifiPasswordForm();
+        return;
+      }
+
+      refresh.disabled = true;
+      refresh.textContent = activeView === "current" ? "Scanning..." : "Loading...";
+      try {
+        const endpoints = {
+          current: "/api/devices",
+          history: "/api/known-devices",
+          sites: "/api/sites",
+        };
+        const response = await fetch(endpoints[activeView]);
+        if (!response.ok) {
+          throw new Error(`Request failed: ${response.status}`);
+        }
+        const data = await response.json();
+        if (activeView === "sites") {
+          renderSites(data);
+        } else {
+          renderDevices(data, activeView);
+        }
+      } catch (error) {
+        content.className = "error";
+        content.textContent = error.message;
+      } finally {
+        refresh.disabled = false;
+        refresh.textContent = "Refresh";
+      }
+    }
+
+    function setView(view) {
+      activeView = view;
+      currentTab.classList.toggle("active", view === "current");
+      historyTab.classList.toggle("active", view === "history");
+      sitesTab.classList.toggle("active", view === "sites");
+      wifiTab.classList.toggle("active", view === "wifi");
+      loadDevices();
+    }
+
+    refresh.addEventListener("click", loadDevices);
+    currentTab.addEventListener("click", () => setView("current"));
+    historyTab.addEventListener("click", () => setView("history"));
+    sitesTab.addEventListener("click", () => setView("sites"));
+    wifiTab.addEventListener("click", () => setView("wifi"));
+    loadDevices();
+  </script>
+</body>
+</html>
