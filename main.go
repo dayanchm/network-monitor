@@ -1,15 +1,42 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"flag"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"network-monitor/network"
 	"network-monitor/network/router"
 	"os"
+	"strings"
 )
 
 func main() {
+	if len(os.Args) > 1 {
+		host, err := parseDiagnoseArgs(os.Args[1:], os.Stderr)
+		if err != nil {
+			if err == flag.ErrHelp {
+				return
+			}
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(2)
+		}
+		var result network.Diagnostics
+		if host == "" {
+			result = network.Diagnose(context.Background())
+		} else {
+			result = network.DiagnoseHost(context.Background(), host)
+		}
+		if err := result.Print(os.Stdout); err != nil {
+			log.Fatal(err)
+		}
+
+		return
+	}
+
 	host := getEnv("HOST", "0.0.0.0")
 	port := getEnv("PORT", "8888")
 	iface := os.Getenv("NETWORK_INTERFACE")
@@ -112,4 +139,31 @@ func getEnv(key, fallback string) string {
 		return fallback
 	}
 	return value
+}
+
+func parseDiagnoseArgs(args []string, output io.Writer) (string, error) {
+	if len(args) == 0 || args[0] != "diagnose" {
+		return "", fmt.Errorf("Usage: network-monitor [diagnose [--host hostname]]")
+	}
+	flags := flag.NewFlagSet("diagnose", flag.ContinueOnError)
+	flags.SetOutput(output)
+	host := flags.String("host", "", "IPv4 address or hostname to diagnose (no URL or port)")
+	if err := flags.Parse(args[1:]); err != nil {
+		return "", err
+	}
+	if flags.NArg() != 0 {
+		return "", fmt.Errorf("unexpected argument: %s", flags.Arg(0))
+	}
+	supplied := false
+	flags.Visit(func(f *flag.Flag) {
+		if f.Name == "host" {
+			supplied = true
+		}
+	})
+	if supplied {
+		if *host == "" || strings.HasPrefix(*host, "-") || strings.ContainsAny(*host, "/: \t\r\n") {
+			return "", fmt.Errorf("--host requires a hostname or IPv4 address, without a URL or port")
+		}
+	}
+	return *host, nil
 }
