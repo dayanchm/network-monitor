@@ -163,3 +163,54 @@ go run . diagnose --host tmcars.info
 port. Custom hostnames are resolved to IPv4 for ping and VPN route checks;
 DNS health checks the supplied hostname. All internet measurements then refer
 to that target. A site can work in a browser while blocking ICMP ping.
+
+
+
+
+## Diagnostic source layout
+
+```text
+cmd/diagnose/
+└── main.go                  # Standalone diagnose entry point
+internal/diagnostic/
+├── result.go                # Result type and summary formatting
+├── diagnostic.go            # Network checks
+└── diagnostic_test.go       # Diagnostic tests
+internal/diagnosticcli/
+├── cli.go                   # Shared CLI arguments and execution
+└── cli_test.go              # CLI argument tests
+```
+
+Run the standalone command:
+
+```bash
+go run ./cmd/diagnose --host tmcars.info
+```
+
+The root command also continues to support `go run . diagnose` and
+`go run . diagnose --host tmcars.info`.
+
+
+## Application packages
+
+```text
+cmd/
+├── diagnose/main.go       # Standalone diagnostics
+└── server/main.go         # Standalone dashboard and API
+internal/
+├── diagnostic/           # Results, orchestration, gateway, DNS, ping, VPN
+├── diagnosticcli/        # Diagnostic arguments and CLI tests
+├── network/              # Device discovery, traffic, history, DNS proxy, limits
+├── router/               # Router integrations
+└── server/               # Server startup and HTTP routes
+main.go                   # Existing root command dispatch
+```
+
+Start the server with `go run ./cmd/server` (packet capture may require sudo).
+Existing `go run .` and `go run . diagnose` commands remain supported.
+
+Diagnostics return `diagnostic.DiagnosticResult` independently of terminal output.
+The result provides boolean connectivity fields, numeric `LatencyMS` and
+`PacketLoss`, and JSON tags for serialization with `encoding/json`. Measurement
+flags distinguish unavailable values from zero; status, error, and tunnel fields
+preserve diagnostic details. Terminal formatting lives in `display.go`.

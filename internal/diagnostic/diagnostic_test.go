@@ -1,4 +1,4 @@
-package network
+package diagnostic
 
 import (
 	"bytes"
@@ -81,7 +81,7 @@ func TestDiagnostics(t *testing.T) {
 				want = Diagnostics{"unavailable", "unreachable", "unhealthy (lookup failed)", "unavailable", "100%", "connected"}
 				expectedCalls = 1
 			}
-			if got != want || calls != expectedCalls {
+			if got.summary() != want || calls != expectedCalls {
 				t.Fatalf("got %+v (%d calls), want %+v", got, calls, want)
 			}
 			var buffer bytes.Buffer
@@ -103,12 +103,12 @@ func TestUnavailableChecks(t *testing.T) {
 		routeInterface: func(context.Context) (string, error) { return "", errors.New("route failure") },
 	}
 	got := runDiagnostics(context.Background(), checks)
-	if got.Internet != "unavailable (missing ping)" || got.PacketLoss != "unavailable" || got.VPN != "unknown" {
+	if got.summary().Internet != "unavailable (missing ping)" || got.summary().PacketLoss != "unavailable" || got.summary().VPN != "unknown" {
 		t.Fatalf("%+v", got)
 	}
 	checks.routeInterface = func(context.Context) (string, error) { return "en0", nil }
 
-	if got := runDiagnostics(context.Background(), checks); got.VPN != "disconnected" {
+	if got := runDiagnostics(context.Background(), checks); got.summary().VPN != "disconnected" {
 		t.Fatalf("%+v", got)
 	}
 }
@@ -151,7 +151,7 @@ func TestTunnelGateway(t *testing.T) {
 			routeInterface: func(context.Context) (string, error) { return tunnel.iface, nil },
 		}
 		got := runDiagnostics(context.Background(), checks)
-		if got.Gateway != "tunnel route ("+tunnel.iface+")" || got.Internet != "reachable" || calls != 1 {
+		if got.summary().Gateway != "tunnel route ("+tunnel.iface+")" || got.summary().Internet != "reachable" || calls != 1 {
 			t.Fatalf("%+v, ping calls %d", got, calls)
 		}
 	}
@@ -170,7 +170,7 @@ func TestCustomTarget(t *testing.T) {
 		dns:            func(context.Context) error { return nil },
 		routeInterface: func(context.Context) (string, error) { return "en0", nil },
 	}
-	if got := runDiagnostics(context.Background(), checks); got.Internet != "reachable" {
+	if got := runDiagnostics(context.Background(), checks); got.summary().Internet != "reachable" {
 		t.Fatalf("%+v", got)
 	}
 	ip, err := resolveDiagnosticIPv4(context.Background(), "192.0.2.1")
