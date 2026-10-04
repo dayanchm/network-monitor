@@ -214,3 +214,40 @@ The result provides boolean connectivity fields, numeric `LatencyMS` and
 `PacketLoss`, and JSON tags for serialization with `encoding/json`. Measurement
 flags distinguish unavailable values from zero; status, error, and tunnel fields
 preserve diagnostic details. Terminal formatting lives in `display.go`.
+
+
+
+
+
+## Local AI analysis with Ollama
+
+Install Ollama, start its local server, and download the model:
+
+```bash
+ollama serve
+# In another terminal:
+ollama pull llama3.2
+go run . diagnose --ai
+# Custom target and model:
+go run ./cmd/diagnose --host tmcars.info --ai --model llama3.2
+```
+
+`--ai` is optional. Without it, no AI request is sent. The default model is
+`llama3.2` and the default server is `http://localhost:11434`. Configure them
+with `OLLAMA_MODEL` and `OLLAMA_HOST`, or override with `--model` and
+`--ollama-url` (a full URL including the scheme). A configured remote URL sends
+the collected diagnostic data to that server; keep the default for local use.
+
+The CLI prints the raw measurements first, then a separate **AI Analysis**
+section. Unavailable servers, missing models, and generation errors appear in
+that section without discarding measurements or failing completed diagnostics.
+Missing models include an `ollama pull` suggestion; models are not downloaded
+automatically. Generation is bounded by a two-minute timeout.
+
+The provider sends the structured `DiagnosticResult` as JSON, including
+measurement validity, route status, and errors. Its prompt restricts analysis
+to those measurements and requires uncertainty to be stated. The provider
+has no network measurement tools and does not perform additional checks.
+Model text can still be inaccurate; it is an interpretation, not new evidence.
+The HTTP integration uses Ollama's non-streaming `/api/generate` endpoint:
+https://docs.ollama.com/api/generate.

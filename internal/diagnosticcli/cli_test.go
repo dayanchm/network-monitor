@@ -26,3 +26,16 @@ func TestDiagnoseArgs(t *testing.T) {
 		}
 	}
 }
+
+func TestAIOptions(t *testing.T) {
+	t.Setenv("OLLAMA_MODEL", "env-model")
+	t.Setenv("OLLAMA_HOST", "http://localhost:11434")
+	options, err := parseOptions([]string{"diagnose", "--ai"}, io.Discard)
+	if err != nil || !options.ai || options.model != "env-model" {
+		t.Fatalf("%+v %v", options, err)
+	}
+	options, err = parseOptions([]string{"diagnose", "--model", "flag-model", "--ollama-url", "http://localhost:9999"}, io.Discard)
+	if err != nil || options.ai || options.model != "flag-model" || options.ollamaURL != "http://localhost:9999" {
+		t.Fatalf("%+v %v", options, err)
+	}
+}

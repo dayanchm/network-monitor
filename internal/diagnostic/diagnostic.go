@@ -57,7 +57,6 @@ func diagnoseTarget(ctx context.Context, target, dnsHost string) DiagnosticResul
 func runDiagnostics(ctx context.Context, checks diagnosticChecks) DiagnosticResult {
 	result := DiagnosticResult{GatewayStatus: "unavailable", InternetStatus: "unavailable"}
 
-	// Give each check its own deadline so a failed gateway does not skip later checks.
 	gatewayCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	gateway, err := checks.gateway(gatewayCtx)
 	cancel()
@@ -65,12 +64,16 @@ func runDiagnostics(ctx context.Context, checks diagnosticChecks) DiagnosticResu
 		pingCtx, cancel := context.WithTimeout(ctx, 8*time.Second)
 		output, pingErr := checks.ping(pingCtx, gateway)
 		cancel()
+
+		result.GatewayMeasured = true
 		result.GatewayStatus = pingStatus(output, pingErr)
 		result.GatewayReachable = result.GatewayStatus == "reachable"
 	} else {
 		var tunnel *tunnelGatewayError
 		if errors.As(err, &tunnel) {
 			result.GatewayTunnel = tunnel.iface
+			result.GatewayStatus = "tunnel_route"
+			result.GatewayMeasured = false
 		}
 	}
 	pingCtx, cancel := context.WithTimeout(ctx, 8*time.Second)
@@ -81,17 +84,18 @@ func runDiagnostics(ctx context.Context, checks diagnosticChecks) DiagnosticResu
 	output, pingErr := checks.ping(pingCtx, target)
 	cancel()
 	result.InternetStatus = pingStatus(output, pingErr)
-	result.InternetReachable = result.InternetStatus == "reachable" // İnternet hedefinin erişim sonucu.
+	result.InternetReachable = result.InternetStatus == "reachable"
 	if result.InternetStatus == "unavailable" && pingErr != nil {
 		result.InternetError = pingErr.Error()
 	}
 	if loss, latency, ok := parsePing(output); ok {
-		result.PacketLoss = loss // Yüzde değerini metin yerine sayı olarak saklar.
+		result.PacketLoss = loss
 		result.PacketLossMeasured = true
 		if latency != "" {
 			if ms, err := strconv.ParseFloat(latency, 64); err == nil {
-				result.LatencyMS = ms // Ortalama gecikmeyi milisaniye olarak saklar.
+				result.LatencyMS = ms
 				result.LatencyMeasured = true
+				result.LatencyLevel = classifyLatency(ms)
 			}
 		}
 	}
