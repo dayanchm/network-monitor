@@ -9,4 +9,10 @@ const (
 
 	DefaultAnthropicBaseURL = "https://api.anthropic.com/v1"
 	DefaultAnthropicModel   = "claude-sonnet-5-5"
+
+	DefaultGeminiBaseURL = "https://generativelanguage.googleapis.com/v1beta"
+	DefaultGeminiModel   = "gemini-3.8-flash"
+
+	DefaultDeepSeekBaseURL = "https://api.deepseek.com"
+	DefaultDeepSeekModel   = "deepseek-flash"
 )
