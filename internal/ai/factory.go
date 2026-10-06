@@ -38,9 +38,19 @@ func NewProvider(cfg Config) (Provider, error) {
 		}
 		return NewAnthropicProvider(cfg.APIKey, cfg.Model), nil
 	case "gemini":
-		return nil, fmt.Errorf("gemini provider is not implemented yet")
+		if strings.TrimSpace(cfg.APIKey) == "" {
+			return nil, fmt.Errorf("GEMINI_API_KEY is not set")
+		}
+		return NewGeminiProvider(cfg.APIKey, cfg.Model), nil
 	case "deepseek":
-		return nil, fmt.Errorf("deepseek provider is not implemented yet")
+		if strings.TrimSpace(cfg.APIKey) == "" {
+			return nil, fmt.Errorf("DEEPSEEK_API_KEY is not set")
+		}
+		provider := NewDeepSeekProvider(cfg.APIKey, cfg.Model)
+		if strings.TrimSpace(cfg.BaseURL) != "" {
+			provider.BaseURL = cfg.BaseURL
+		}
+		return provider, nil
 	default:
 		return nil, fmt.Errorf("unknown AI provider %q", cfg.Provider)
 	}
