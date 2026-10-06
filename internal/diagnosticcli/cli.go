@@ -30,13 +30,22 @@ func RunDiagnose(ctx context.Context, args []string, stdout, stderr io.Writer) e
 	if !options.ai {
 		return nil
 	}
-	provider := &ai.OllamaProvider{Model: options.model, BaseURL: options.ollamaURL}
+	provider, err := ai.NewProvider(ai.Config{
+		Provider: options.provider,
+		Model:    options.model,
+		BaseURL:  options.ollamaURL,
+	})
+
+	if err != nil {
+		return err
+	}
 	return printAnalysis(ctx, provider, result, stdout)
 }
 
 type diagnoseOptions struct {
 	host             string
 	ai               bool
+	provider         string
 	model, ollamaURL string
 }
 
@@ -53,7 +62,12 @@ func parseOptions(args []string, output io.Writer) (diagnoseOptions, error) {
 	}
 	flags := flag.NewFlagSet("diagnose", flag.ContinueOnError)
 	flags.SetOutput(output)
-	flags.BoolVar(&options.ai, "ai", false, "analyze collected measurements with local Ollama")
+	flags.BoolVar(
+		&options.ai,
+		"ai",
+		false,
+		"analyze collected measurements with AI",
+	)
 	model := os.Getenv("OLLAMA_MODEL")
 	if model == "" {
 		model = ai.DefaultModel
@@ -64,6 +78,12 @@ func parseOptions(args []string, output io.Writer) (diagnoseOptions, error) {
 	}
 	flags.StringVar(&options.model, "model", model, "Ollama model name")
 	flags.StringVar(&options.ollamaURL, "ollama-url", endpoint, "Ollama server URL")
+	flags.StringVar(
+		&options.provider,
+		"provider",
+		"ollama",
+		"AI provider (ollama, openai, anthropic, gemini, deepseek)",
+	)
 	host := flags.String("host", "", "IPv4 address or hostname to diagnose (no URL or port)")
 	if err := flags.Parse(args[1:]); err != nil {
 		return options, err
