@@ -1,16 +1,27 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
 	"network-monitor/internal/network"
 	"network-monitor/internal/router"
 	"os"
+	"strings"
+	"sync"
 )
 
 // Run starts the dashboard, API, DNS proxy and network tracking.
 func Run() {
+	historyDB, err := openConnectionHistory("devices.db")
+	if err != nil {
+		log.Fatalf("Connection history: %v", err)
+	}
+	defer historyDB.Close()
+	go trackConnection(context.Background(), historyDB)
+	http.HandleFunc("/api/connection-history", connectionHistoryHandler(historyDB))
+	http.HandleFunc("/api/connection-analysis", connectionAnalysisHandler(historyDB))
 	host := getEnv("HOST", "0.0.0.0")
 	port := getEnv("PORT", "8888")
 	iface := os.Getenv("NETWORK_INTERFACE")
@@ -27,26 +38,56 @@ func Run() {
 	if localIP, err := network.InterfaceIPv4(iface); err == nil {
 		log.Printf("Set tracked devices DNS server to: %s", localIP)
 	}
-
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" {
-			http.NotFound(w, r)
+	var scanMu sync.Mutex
+	scanDevices := func() ([]network.Device, error) {
+		scanMu.Lock()
+		defer scanMu.Unlock()
+		devices, err := network.ScanDevices()
+		if err != nil {
+			return nil, err
+		}
+		network.SaveDeviceHistory(devices)
+		return devices, nil
+	}
+	go func() {
+		log.Println("Startup device scan started")
+		devices, err := scanDevices()
+		if err != nil {
+			log.Printf("Startup device scan: %v", err)
 			return
 		}
-		http.ServeFile(w, r, "index.html")
-	})
+		log.Printf("Startup device scan completed: %d devices", len(devices))
+	}()
+
+	registerWebRoutes(http.DefaultServeMux)
 
 	// list devices
 	http.HandleFunc("/api/devices", func(w http.ResponseWriter, r *http.Request) {
 		log.Println("GET /api/devices")
-		devices := network.ScanDevices()
-		network.SaveDeviceHistory(devices)
+		devices, err := scanDevices()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusServiceUnavailable)
+			return
+		}
 		network.RespondWithDevices(w, devices)
 	})
 
 	http.HandleFunc("/api/known-devices", func(w http.ResponseWriter, r *http.Request) {
 		log.Println("GET /api/known-devices")
-		network.RespondWithDevices(w, network.KnownDevices())
+		current, err := scanDevices()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusServiceUnavailable)
+			return
+		}
+		seen := make(map[string]bool, len(current))
+		for _, device := range current {
+			seen[strings.ToLower(device.MAC)] = true
+		}
+		known := network.KnownDevices()
+		for i := range known {
+			known[i].Connected = seen[strings.ToLower(known[i].MAC)]
+		}
+		network.RespondWithDevices(w, known)
 	})
 
 	http.HandleFunc("/api/sites", func(w http.ResponseWriter, r *http.Request) {

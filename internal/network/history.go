@@ -45,7 +45,12 @@ func SaveDeviceHistory(devices []Device) {
 			VALUES (?, ?, ?, ?, ?)
 			ON CONFLICT(mac) DO UPDATE SET
 				ip = excluded.ip,
-				hostname = excluded.hostname,
+				hostname = CASE
+					WHEN excluded.hostname IN ('', 'unknown', 'gateway')
+						AND device_history.hostname NOT IN ('', 'unknown', 'gateway')
+					THEN device_history.hostname
+					ELSE excluded.hostname
+				END,
 				last_seen = excluded.last_seen
 		`, device.MAC, device.IP, device.Hostname, now, now)
 		if err != nil {

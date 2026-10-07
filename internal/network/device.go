@@ -2,6 +2,7 @@ package network
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 	"os/exec"
@@ -17,33 +18,29 @@ type Device struct {
 	Connected bool   `json:"connected"`
 }
 
-func ScanDevices() []Device {
-	devicesByIP := make(map[string]Device)
-	if iface, err := DefaultInterface(); err == nil {
-		for _, device := range scanWithARPScan(iface) {
-			devicesByIP[device.IP] = device
-		}
+func ScanDevices() ([]Device, error) {
+	iface, err := DefaultInterface()
+	if err != nil {
+		return nil, err
 	}
-	for _, device := range scanWithARPCache() {
-		if _, ok := devicesByIP[device.IP]; !ok {
-			devicesByIP[device.IP] = device
-		}
+	devices, err := scanWithARPScan(iface)
+	if err != nil {
+		return nil, err
 	}
-
-	devices := make([]Device, 0, len(devicesByIP))
-	for _, device := range devicesByIP {
-		devices = append(devices, device)
+	refreshDHCPLeases()
+	for i := range devices {
+		devices[i] = newDevice(devices[i].IP, devices[i].MAC)
 	}
 	sort.Slice(devices, func(i, j int) bool {
 		return ipLess(devices[i].IP, devices[j].IP)
 	})
-	return devices
+	return devices, nil
 }
 
-func scanWithARPScan(ifaceName string) []Device {
+func scanWithARPScan(ifaceName string) ([]Device, error) {
 	arpScanPath, err := arpScanCommand()
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("active scan requires arp-scan; install it with brew install arp-scan: %w", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
@@ -52,11 +49,11 @@ func scanWithARPScan(ifaceName string) []Device {
 	output, err := exec.CommandContext(ctx, arpScanPath, "--interface="+ifaceName, "--plain", "--ignoredups", "--localnet").CombinedOutput()
 	if err != nil {
 		log.Printf("arp-scan failed on %s: %v: %s", ifaceName, err, strings.TrimSpace(string(output)))
-		return nil
+		return nil, fmt.Errorf("active scan failed on %s; check packet-capture permissions: %w", ifaceName, err)
 	}
 
 	seen := make(map[string]bool)
-	var devices []Device
+	devices := []Device{}
 	for _, line := range strings.Split(string(output), "\n") {
 		fields := strings.Fields(line)
 		if len(fields) < 2 {
@@ -68,9 +65,9 @@ func scanWithARPScan(ifaceName string) []Device {
 			continue
 		}
 		seen[ip] = true
-		devices = append(devices, newDevice(ip, mac))
+		devices = append(devices, Device{IP: ip, MAC: mac, Connected: true})
 	}
-	return devices
+	return devices, nil
 }
 
 func arpScanCommand() (string, error) {
@@ -158,9 +155,6 @@ func GetHostname(ip, mac string) string {
 	if hostname := lookupOwnHostname(ip); hostname != "" {
 		return hostname
 	}
-	if isDefaultGateway(ip) {
-		return "gateway"
-	}
 	if hostname := DHCPHostname(ip, mac); hostname != "" {
 		return hostname
 	}
@@ -169,6 +163,9 @@ func GetHostname(ip, mac string) string {
 	}
 	if hostname := LookupMDNSHostname(ip); hostname != "" {
 		return hostname
+	}
+	if isDefaultGateway(ip) {
+		return "gateway"
 	}
 	return "unknown"
 

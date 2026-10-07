@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connection - Network Monitor</title>
+<link rel="stylesheet" href="/assets/styles.css">
+<link rel="stylesheet" href="/assets/connection.css">
+<script defer src="/assets/common.js"></script>
+<script defer src="/assets/problem-events.js"></script>
+<script defer src="/assets/connection.js"></script>
+</head>
+<body class="connection-page"><main class="shell">
+<header><div class="connection-heading"><span class="product-mark" aria-hidden="true">NM</span><div><p class="product-name">Network Monitor</p><h1>Connection</h1></div></div><div class="actions"><span class="stat" id="count"></span><button id="refresh" type="button">Refresh</button></div></header>
+<nav class="tabs" aria-label="Network views"><a href="/devices">Current</a>
+<a href="/history">History</a>
+<a href="/connection" aria-current="page">Connection</a>
+<a href="/sites">Sites</a>
+<a href="/settings/wifi">Wi-Fi Password</a></nav>
+<section id="content" class="empty" aria-live="polite">Loading...</section>
+<section class="ai-comment" aria-labelledby="ai-title"><div class="timeline-heading"><h2 id="ai-title">AI Comment</h2><button id="analyze" type="button">Analyze latest measurement</button></div><p id="ai-meta">Latest measurement of the selected day</p><div id="ai-comment" role="status">No analysis requested.</div></section>
+</main></body>
+</html>

@@ -1,0 +1,249 @@
+.connection-page .problem-timeline { padding-bottom: 24px; border-bottom: 1px solid var(--line); }
+.timeline-heading, .event-heading, .event-ending { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.timeline-heading { margin-bottom: 20px; }
+.timeline-heading h2 { font-size: 15px; margin: 0; }
+.timeline-heading > span, .event-ending span { color: var(--muted); font-size: 12px; }
+.event-list { list-style: none; padding: 0 0 0 10px; margin: 0; }
+.event { position: relative; padding: 0 0 24px 24px; border-left: 1px solid var(--line); }
+.event:last-child { padding-bottom: 0; }
+.event::before { content: ""; position: absolute; left: -5px; top: 4px; width: 9px; height: 9px; border-radius: 50%; background: #b38320; }
+.event-loss::before { background: #ad4e6b; }
+.event-unreachable::before { background: #c13e3e; }
+.event-heading strong { font-size: 14px; }
+.event-state { color: var(--muted); font-size: 11px; }
+.event p { margin: 8px 0; color: var(--muted); font-size: 12px; }
+.event-ending { margin-top: 10px; font-size: 12px; color: var(--accent); }
+.timeline-empty { font-size: 13px; color: var(--muted); }
+
+.connection-page {
+  background: #ffffff;
+  --text: #20272c;
+  --muted: #737c85;
+  --line: #e7eaed;
+  --accent: #167466;
+}
+
+.ai-comment { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--line); }
+.ai-comment button { min-height: 36px; font-size: 12px; }
+#ai-meta { color: var(--muted); font-size: 12px; }
+#ai-comment { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.8; margin-top: 16px; }
+
+.connection-page .shell {
+  width: min(1180px, calc(100% - 48px));
+  padding: 40px 0;
+}
+
+.connection-heading { display: flex; align-items: center; gap: 16px; }
+.product-mark { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; background: #e9f5ef; color: #176b51; border-radius: 8px; font-size: 15px; font-weight: 750; }
+.connection-page .product-name { margin: 0 0 5px; color: var(--muted); font-size: 12px; }
+.connection-page h1 { font-size: 26px; font-weight: 650; }
+.connection-page .actions .stat { border: 0; background: transparent; font-size: 12px; padding: 0; }
+.connection-page #refresh { min-height: 36px; padding: 0 16px; font-size: 12px; border-radius: 6px; }
+
+.connection-page header {
+  padding-bottom: 24px;
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.connection-page .subtitle {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.connection-page .tabs {
+  gap: 20px;
+  margin: 0 0 24px;
+  padding: 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.connection-page .tabs a {
+  min-height: 52px;
+  padding: 0 2px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+}
+
+.connection-page .tabs a:hover,
+.connection-page .tabs a[aria-current="page"] {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: transparent;
+}
+
+.connection-page a:focus-visible,
+.connection-page button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.connection-page .connection {
+  gap: 24px;
+  min-width: 0;
+}
+
+.connection-page .connection-toolbar {
+  min-height: 56px;
+  gap: 12px;
+  padding: 0 0 16px;
+  border-bottom: 0;
+}
+
+.connection-page .connection-toolbar input {
+  width: 180px;
+  background: white;
+  font-size: 14px;
+}
+
+.connection-page #connection-status {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.connection-page #connection-results {
+  min-width: 0;
+}
+
+.connection-page .connection-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  padding: 24px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.connection-page .connection-summary span {
+  padding: 4px 24px;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  border-left: 1px solid var(--line);
+}
+
+.connection-page .connection-summary span:first-child {
+  padding-left: 0;
+  border-left: 0;
+  color: #166534;
+}
+
+.connection-page .connection-summary span:nth-child(2) {
+  color: #a33b32;
+}
+
+.connection-page .connection-summary span:last-child {
+  color: #64748b;
+}
+
+.connection-page .legend {
+  gap: 20px;
+  color: var(--muted);
+  text-transform: capitalize;
+}
+
+.connection-page .legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.connection-page .legend span::before {
+  margin: 0;
+  border-radius: 2px;
+}
+
+.connection-page .chart-section {
+  padding: 8px 0 28px;
+  min-width: 0;
+}
+
+.connection-page .chart-section h2 {
+  margin-bottom: 16px;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.connection-page .chart-section h2::before { content: ""; display: inline-block; width: 3px; height: 12px; margin-right: 9px; border-radius: 2px; background: #268675; }
+.connection-page .chart-section:nth-of-type(5) h2::before { background: #a44b62; }
+
+.connection-page .chart {
+  background: #fafbfc;
+  border-radius: 4px;
+  width: 100%;
+  height: 220px;
+}
+
+.connection-page .table-wrap {
+  max-height: 480px;
+  border-radius: 6px;
+}
+
+.connection-page th { background: #f7f9fa; font-weight: 600; font-size: 10px; }
+.connection-page td { font-size: 13px; padding-top: 15px; padding-bottom: 15px; }
+.connection-page .legend { font-size: 12px; }
+.connection-page .legend span::before { width: 7px; height: 7px; border-radius: 50%; }
+.connection-page #connection-date { border-color: #e0e6e5; border-radius: 6px; min-height: 38px; }
+.connection-page .connection-toolbar label { font-size: 12px; }
+
+.connection-page th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.connection-page td {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.connection-page tbody tr:hover {
+  background: #f0f8f6;
+}
+
+.connection-page #connection-results.empty {
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+@media (max-width: 720px) {
+  .connection-page .shell {
+    width: calc(100% - 24px);
+    padding: 20px 0;
+  }
+
+  .connection-page .tabs {
+    gap: 4px 16px;
+  }
+
+  .connection-page .tabs a {
+    min-height: 42px;
+    font-size: 13px;
+  }
+
+  .connection-page #connection-status {
+    width: 100%;
+    margin: 0;
+  }
+
+  .connection-page .connection-summary {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .connection-page .connection-summary span {
+    padding: 0;
+    border: 0;
+    font-size: 14px;
+  }
+}
